@@ -1,14 +1,9 @@
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-
 import useCachedResources from "./hooks/useCachedResources";
 import useColorScheme from "./hooks/useColorScheme";
-import Navigation from "./navigation";
 import { BarCodeScanner } from "expo-barcode-scanner";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, Button } from "react-native";
 import agent from "./src/api/agent";
-import { Packet } from "./src/models/Packet";
 
 export default function App() {
   const isLoadingComplete = useCachedResources();
@@ -17,6 +12,7 @@ export default function App() {
 
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
+  const [hasScannedIds, setHasScannedIds] = useState(false);
   const [text, setText] = useState("Not yet scanned");
 
   const askForCameraPermission = () => {
@@ -38,6 +34,7 @@ export default function App() {
   // When we scan the bar code
   const handleBarCodeScanned = ({ type, data }: Props) => {
     setScanned(true);
+    setHasScannedIds(true);
     if (!ids.includes(data)) {
       setIds([...ids, data]);
       setText(data);
@@ -50,11 +47,14 @@ export default function App() {
   };
 
   const hadleSubmit = async () => {
-    setIds([...ids, "717952d5-c3eb-4eeb-9cd6-c85e4d3958ce"]);
+    // for testing
+    // setIds([...ids, "717952d5-c3eb-4eeb-9cd6-c85e4d3958ce"]);
+
     ids.map(async (id) => {
       const response = await agent.Packets.update(id);
       console.log(response);
     });
+    setHasScannedIds(false);
   };
 
   // Check permissions and return the coresponding screens
@@ -86,21 +86,12 @@ export default function App() {
       <Text style={styles.maintext}>{text}</Text>
 
       {scanned && <Button title={"Scan again?"} onPress={() => setScanned(false)} color="tomato" />}
-      <Button title={"Send"} onPress={() => hadleSubmit()} color="blue" />
+      <span style={{ marginTop: "7rem" }}>
+        {hasScannedIds && <Button title={"Send"} onPress={() => hadleSubmit()} color="blue" />}
+      </span>
     </View>
   );
 }
-
-//   if (!isLoadingComplete) {
-//     return null;
-//   } else {
-//     return (
-//       <SafeAreaProvider>
-//         <Navigation colorScheme={colorScheme} />
-//       </SafeAreaProvider>
-//     );
-//   }
-// }
 
 const styles = StyleSheet.create({
   container: {
